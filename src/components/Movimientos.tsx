@@ -110,14 +110,15 @@ export function Movimientos({
     const nuevosErrores: ErroresFormulario = {};
 
     if (productoId === '') {
-      nuevosErrores.productoId = 'Selecciona un producto.';
+      nuevosErrores.productoId = 'Falta el producto. Elige uno de la lista.';
     }
 
     const cantidadLimpia = cantidad.trim();
     if (cantidadLimpia === '') {
-      nuevosErrores.cantidad = 'Escribe la cantidad.';
+      nuevosErrores.cantidad = 'Falta la cantidad. Escribe cuántas unidades entran o salen.';
     } else if (!/^\d+$/.test(cantidadLimpia) || Number.parseInt(cantidadLimpia, 10) <= 0) {
-      nuevosErrores.cantidad = 'Ingresa un número entero mayor que 0.';
+      nuevosErrores.cantidad =
+        'La cantidad no es válida. Escribe un número entero mayor que 0.';
     }
 
     return nuevosErrores;
@@ -211,7 +212,7 @@ export function Movimientos({
                   disabled={cargandoProductos || registrando}
                   aria-invalid={Boolean(errores.productoId)}
                   aria-describedby={errores.productoId ? 'error-mov-producto' : undefined}
-                  className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 disabled:opacity-60 ${
+                  className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 disabled:opacity-60 ${
                     errores.productoId
                       ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                       : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
@@ -260,7 +261,7 @@ export function Movimientos({
                       setTipo('entrada');
                       setErrorRegistro(null);
                     }}
-                    className={`min-h-[42px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
+                    className={`min-h-[44px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
                       tipo === 'entrada'
                         ? 'border-[#15803D] bg-[#F0FDF4] text-[#15803D]'
                         : 'border-[#E2E8F0] bg-[#FFFFFF] text-[#475569] hover:text-[#0F172A]'
@@ -278,7 +279,7 @@ export function Movimientos({
                       setTipo('salida');
                       setErrorRegistro(null);
                     }}
-                    className={`min-h-[42px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
+                    className={`min-h-[44px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
                       tipo === 'salida'
                         ? 'border-[#B91C1C] bg-[#FEF2F2] text-[#B91C1C]'
                         : 'border-[#E2E8F0] bg-[#FFFFFF] text-[#475569] hover:text-[#0F172A]'
@@ -315,7 +316,7 @@ export function Movimientos({
                   aria-invalid={Boolean(errores.cantidad)}
                   aria-describedby={errores.cantidad ? 'error-mov-cantidad' : undefined}
                   placeholder="Ej. 10"
-                  className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 disabled:opacity-60 ${
+                  className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 disabled:opacity-60 ${
                     errores.cantidad
                       ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                       : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
@@ -339,7 +340,7 @@ export function Movimientos({
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
                   placeholder="Ej. Pedido semanal o venta en mostrador"
-                  className="mt-1.5 min-h-[42px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 focus:border-[#1D4ED8] disabled:opacity-60"
+                  className="mt-1.5 min-h-[44px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 focus:border-[#1D4ED8] disabled:opacity-60"
                 />
               </div>
 
@@ -347,7 +348,7 @@ export function Movimientos({
                 <button
                   type="submit"
                   disabled={registrando || cargandoProductos}
-                  className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap cursor-pointer"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap cursor-pointer"
                 >
                   {registrando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                   <span>Registrar</span>
@@ -359,9 +360,13 @@ export function Movimientos({
           {errorRegistro && (
             <div
               role="alert"
-              className="mt-4 rounded-md border border-[#FECACA] bg-[#FEF2F2] px-4 py-3.5 text-sm font-medium text-[#B91C1C]"
+              className="mt-4 rounded-md border border-[#FECACA] bg-[#FEF2F2] px-4 py-3.5 text-sm text-[#B91C1C]"
             >
-              {errorRegistro}
+              <p className="font-semibold">{errorRegistro}</p>
+              <p className="mt-1 text-xs text-[#7F1D1D]">
+                Ajusta la cantidad según el stock disponible o revisa la conexión e intenta de
+                nuevo.
+              </p>
             </div>
           )}
         </div>
@@ -375,13 +380,13 @@ export function Movimientos({
                 type="button"
                 onClick={() => void cargarHistorial()}
                 disabled={cargandoHistorial}
-                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3 py-1.5 text-xs font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] disabled:opacity-60 whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3 py-1.5 text-xs font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] disabled:opacity-60 sm:min-h-[36px] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <RefreshCw
                   className={`h-3.5 w-3.5 text-[#475569] ${cargandoHistorial ? 'animate-spin' : ''}`}
                   aria-hidden="true"
                 />
-                <span>Actualizar</span>
+                <span>Actualizar historial</span>
               </button>
             </div>
 
@@ -389,6 +394,9 @@ export function Movimientos({
               <div role="alert" className="px-4 py-6 text-sm text-[#B91C1C] sm:px-5">
                 <p className="font-semibold">No se pudo cargar el historial de movimientos.</p>
                 <p className="mt-1 font-mono text-xs text-[#991B1B]">{errorHistorial}</p>
+                <p className="mt-1.5 text-xs text-[#7F1D1D]">
+                  Revisa tu conexión o los permisos en Supabase y vuelve a actualizar el historial.
+                </p>
               </div>
             ) : cargandoHistorial ? (
               <div className="divide-y divide-[#E2E8F0]" aria-busy="true">
@@ -445,10 +453,7 @@ export function Movimientos({
                       const esEntrada = movimiento.tipo === 'entrada';
 
                       return (
-                        <tr
-                          key={movimiento.id}
-                          className="transition-colors duration-100 hover:bg-[#F8FAFC]"
-                        >
+                        <tr key={movimiento.id}>
                           <td className="px-4 py-3 font-mono text-xs text-[#475569] tabular-nums whitespace-nowrap sm:px-5">
                             {formatearFecha(movimiento.creado_en)}
                           </td>
@@ -471,7 +476,7 @@ export function Movimientos({
                             {movimiento.nota ? (
                               movimiento.nota
                             ) : (
-                              <span className="text-[#94A3B8]">—</span>
+                              <span className="text-[#64748B]">—</span>
                             )}
                           </td>
                         </tr>

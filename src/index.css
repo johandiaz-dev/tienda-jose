@@ -21,15 +21,14 @@
     color: #0F172A;
   }
 
-  button,
-  a,
-  input,
-  select,
-  textarea {
-    &:focus-visible {
-      outline: 2px solid #1D4ED8;
-      outline-offset: 2px;
-    }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid #1D4ED8;
+    outline-offset: 2px;
   }
 }
 

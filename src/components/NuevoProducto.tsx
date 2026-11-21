@@ -1,5 +1,5 @@
 import { FormEvent, useRef, useState } from 'react';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '../config';
 
 export interface Categoria {
@@ -39,25 +39,28 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
     const nuevosErrores: ErroresFormulario = {};
 
     if (nombre.trim() === '') {
-      nuevosErrores.nombre = 'Escribe el nombre del producto.';
+      nuevosErrores.nombre = 'Falta el nombre. Escribe cómo se llama el producto.';
     }
 
     if (categoriaId === '') {
-      nuevosErrores.categoriaId = 'Selecciona una categoría.';
+      nuevosErrores.categoriaId = 'Falta la categoría. Elige una opción de la lista.';
     }
 
     const precioLimpio = precio.trim();
     if (precioLimpio === '') {
-      nuevosErrores.precio = 'Escribe el precio en pesos.';
+      nuevosErrores.precio = 'Falta el precio. Escribe el valor en pesos colombianos.';
     } else if (!/^\d+$/.test(precioLimpio)) {
-      nuevosErrores.precio = 'Ingresa un precio entero sin puntos ni decimales.';
+      nuevosErrores.precio =
+        'El precio no es válido. Escribe un número entero sin puntos ni decimales.';
     }
 
     const stockMinimoLimpio = stockMinimo.trim();
     if (stockMinimoLimpio === '') {
-      nuevosErrores.stockMinimo = 'Escribe el stock mínimo.';
+      nuevosErrores.stockMinimo =
+        'Falta el stock mínimo. Escribe la cantidad mínima para avisar reposición.';
     } else if (!/^\d+$/.test(stockMinimoLimpio)) {
-      nuevosErrores.stockMinimo = 'Ingresa un número entero igual o mayor que 0.';
+      nuevosErrores.stockMinimo =
+        'El stock mínimo no es válido. Escribe un número entero igual o mayor que 0.';
     }
 
     return nuevosErrores;
@@ -113,7 +116,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
           type="button"
           onClick={onCancelar}
           disabled={guardando}
-          className="mb-3 inline-flex min-h-[36px] items-center gap-1.5 text-sm font-medium text-[#475569] transition-colors duration-150 hover:text-[#0F172A] disabled:opacity-60 whitespace-nowrap cursor-pointer"
+          className="mb-3 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-[#475569] transition-colors duration-150 hover:text-[#0F172A] disabled:opacity-60 sm:min-h-[36px] whitespace-nowrap cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           <span>Volver a Inventario</span>
@@ -131,8 +134,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
       </div>
 
       <div className="max-w-2xl rounded-md border border-[#E2E8F0] bg-[#FFFFFF] p-5 sm:p-6">
-        <div className="mb-6 flex items-start gap-3 rounded-md border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-3 text-sm text-[#334155]">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#1D4ED8]" aria-hidden="true" />
+        <div className="mb-6 rounded-md border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-3 text-sm text-[#334155]">
           <p>
             El producto empieza con stock 0. El stock solo cambia cuando registras una entrada o una
             salida.
@@ -285,16 +287,20 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
               role="alert"
               className="rounded-md border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm text-[#B91C1C]"
             >
-              <p className="font-mono text-xs sm:text-sm">{errorSupabase}</p>
+              <p className="font-semibold">No se pudo guardar el producto.</p>
+              <p className="mt-1 font-mono text-xs text-[#991B1B] sm:text-sm">{errorSupabase}</p>
+              <p className="mt-1.5 text-xs text-[#7F1D1D]">
+                Revisa los datos ingresados o la conexión con Supabase e intenta guardar de nuevo.
+              </p>
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[#E2E8F0] pt-5">
+          <div className="flex flex-col-reverse gap-3 border-t border-[#E2E8F0] pt-5 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onCancelar}
               disabled={guardando}
-              className="min-h-[40px] rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[40px] sm:w-auto whitespace-nowrap shrink-0 cursor-pointer"
             >
               Cancelar
             </button>
@@ -302,7 +308,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
             <button
               type="submit"
               disabled={guardando}
-              className="min-h-[40px] rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] w-full rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[40px] sm:w-auto whitespace-nowrap shrink-0 cursor-pointer"
             >
               {guardando ? 'Guardando...' : 'Guardar producto'}
             </button>

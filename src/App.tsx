@@ -82,7 +82,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A]">
       <header className="sticky top-0 z-10 border-b border-[#E2E8F0] bg-[#FFFFFF]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-4 py-3.5 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 sm:gap-8 sm:px-6">
           <a
             href="#inventario"
             onClick={(e) => {
@@ -90,12 +90,12 @@ export default function App() {
               setSeccion('inventario');
               setVistaInventario('lista');
             }}
-            className="font-display text-xl font-bold tracking-tight text-[#0F172A] whitespace-nowrap shrink-0"
+            className="py-3 font-display text-xl font-bold tracking-tight text-[#0F172A] whitespace-nowrap shrink-0"
           >
             Tienda-jose
           </a>
 
-          <nav aria-label="Navegación principal" className="flex items-center gap-6 sm:gap-8">
+          <nav aria-label="Navegación principal" className="flex items-center gap-5 sm:gap-8">
             <button
               type="button"
               onClick={() => {
@@ -103,38 +103,26 @@ export default function App() {
                 setVistaInventario('lista');
               }}
               aria-current={seccion === 'inventario' ? 'page' : undefined}
-              className={`relative py-2 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`min-h-[48px] border-b-2 px-1 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
                 seccion === 'inventario'
-                  ? 'text-[#1D4ED8]'
-                  : 'text-[#475569] hover:text-[#0F172A]'
+                  ? 'border-[#1D4ED8] text-[#1D4ED8]'
+                  : 'border-transparent text-[#475569] hover:text-[#0F172A]'
               }`}
             >
               Inventario
-              {seccion === 'inventario' && (
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-0 -bottom-[15px] h-0.5 bg-[#1D4ED8]"
-                />
-              )}
             </button>
 
             <button
               type="button"
               onClick={() => setSeccion('movimientos')}
               aria-current={seccion === 'movimientos' ? 'page' : undefined}
-              className={`relative py-2 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`min-h-[48px] border-b-2 px-1 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
                 seccion === 'movimientos'
-                  ? 'text-[#1D4ED8]'
-                  : 'text-[#475569] hover:text-[#0F172A]'
+                  ? 'border-[#1D4ED8] text-[#1D4ED8]'
+                  : 'border-transparent text-[#475569] hover:text-[#0F172A]'
               }`}
             >
               Movimientos
-              {seccion === 'movimientos' && (
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-0 -bottom-[15px] h-0.5 bg-[#1D4ED8]"
-                />
-              )}
             </button>
           </nav>
         </div>
@@ -169,7 +157,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setVistaInventario('nuevo')}
-                  className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] whitespace-nowrap shrink-0 cursor-pointer"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] sm:min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   <span>Nuevo producto</span>
@@ -186,13 +174,17 @@ export default function App() {
                     No se pudo cargar el inventario desde Supabase.
                   </p>
                   <p className="mt-1 font-mono text-xs text-[#991B1B]">{errorCarga}</p>
+                  <p className="mt-1.5 text-xs text-[#7F1D1D]">
+                    Revisa tu conexión a internet o los permisos de lectura en Supabase y vuelve a
+                    cargar.
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void cargarInventario()}
-                  className="min-h-[40px] rounded-md border border-[#FECACA] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors duration-150 hover:bg-[#FEF2F2] whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] rounded-md border border-[#FECACA] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors duration-150 hover:bg-[#FEF2F2] sm:min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  Reintentar
+                  Volver a cargar
                 </button>
               </div>
             )}
@@ -239,7 +231,7 @@ export default function App() {
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar por nombre"
-                  className="min-h-[42px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] pr-3.5 pl-10 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 focus:border-[#1D4ED8]"
+                  className="min-h-[44px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] pr-3.5 pl-10 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 focus:border-[#1D4ED8]"
                 />
               </div>
 
@@ -251,7 +243,7 @@ export default function App() {
                   id="filtro-categoria"
                   value={categoriaFiltro}
                   onChange={(e) => setCategoriaFiltro(e.target.value)}
-                  className="min-h-[42px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 focus:border-[#1D4ED8] sm:w-56"
+                  className="min-h-[44px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 focus:border-[#1D4ED8] sm:w-56"
                 >
                   <option value="">Todas las categorías</option>
                   {categorias.map((categoria) => (
@@ -306,7 +298,7 @@ export default function App() {
                         setBusqueda('');
                         setCategoriaFiltro('');
                       }}
-                      className="mt-4 inline-flex min-h-[40px] items-center rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] cursor-pointer"
+                      className="mt-4 inline-flex min-h-[44px] items-center rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-4 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 hover:bg-[#F8FAFC] sm:min-h-[40px] cursor-pointer"
                     >
                       Mostrar todos los productos
                     </button>
@@ -339,10 +331,7 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-[#E2E8F0] text-sm">
                       {productosFiltrados.map((producto) => (
-                        <tr
-                          key={producto.id}
-                          className="transition-colors duration-100 hover:bg-[#F8FAFC]"
-                        >
+                        <tr key={producto.id}>
                           <td className="px-4 py-3 font-medium text-[#0F172A] sm:px-5">
                             {producto.nombre}
                           </td>
