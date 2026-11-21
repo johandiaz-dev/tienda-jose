@@ -1,0 +1,6 @@
+{
+  "name": "Tienda-jose",
+  "description": "Control de inventario y movimientos para tienda de barrio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
