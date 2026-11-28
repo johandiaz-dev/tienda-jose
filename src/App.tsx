@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { supabase } from './config';
 import { Categoria, NuevoProducto } from './components/NuevoProducto';
@@ -25,6 +25,9 @@ export default function App() {
   const [totalMovimientos, setTotalMovimientos] = useState<number>(0);
 
   const [cargando, setCargando] = useState<boolean>(true);
+  const [navegando, setNavegando] = useState<boolean>(false);
+  const [guardandoProducto, setGuardandoProducto] = useState<boolean>(false);
+  const [actividadMovimientos, setActividadMovimientos] = useState<boolean>(false);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [avisoInventario, setAvisoInventario] = useState<string | null>(null);
 
@@ -32,6 +35,30 @@ export default function App() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('');
   const [soloStockBajo, setSoloStockBajo] = useState<boolean>(false);
   const [productoParaMovimiento, setProductoParaMovimiento] = useState<string | null>(null);
+
+  const timerNavegacionRef = useRef<number | null>(null);
+
+  const pulsarNavegacion = useCallback(() => {
+    if (timerNavegacionRef.current !== null) {
+      window.clearTimeout(timerNavegacionRef.current);
+    }
+    setNavegando(true);
+    timerNavegacionRef.current = window.setTimeout(() => {
+      setNavegando(false);
+      timerNavegacionRef.current = null;
+    }, 280);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerNavegacionRef.current !== null) {
+        window.clearTimeout(timerNavegacionRef.current);
+      }
+    };
+  }, []);
+
+  const cargaGlobalActiva =
+    cargando || navegando || guardandoProducto || actividadMovimientos;
 
   const cargarInventario = useCallback(async () => {
     setCargando(true);
@@ -87,6 +114,23 @@ export default function App() {
   function irAMovimientoProducto(idProducto: number | string) {
     setProductoParaMovimiento(String(idProducto));
     setAvisoInventario(null);
+    pulsarNavegacion();
+    setSeccion('movimientos');
+  }
+
+  function abrirSeccionInventario(vista: VistaInventario = 'lista') {
+    if (seccion !== 'inventario' || vistaInventario !== vista) {
+      pulsarNavegacion();
+    }
+    setSeccion('inventario');
+    setVistaInventario(vista);
+  }
+
+  function abrirSeccionMovimientos() {
+    if (seccion !== 'movimientos') {
+      pulsarNavegacion();
+    }
+    setAvisoInventario(null);
     setSeccion('movimientos');
   }
 
@@ -98,8 +142,7 @@ export default function App() {
             href="#inventario"
             onClick={(e) => {
               e.preventDefault();
-              setSeccion('inventario');
-              setVistaInventario('lista');
+              abrirSeccionInventario('lista');
             }}
             className="py-3 font-display text-xl font-bold tracking-tight text-[#0F172A] whitespace-nowrap shrink-0"
           >
@@ -109,10 +152,7 @@ export default function App() {
           <nav aria-label="Navegación principal" className="flex items-center gap-5 sm:gap-8">
             <button
               type="button"
-              onClick={() => {
-                setSeccion('inventario');
-                setVistaInventario('lista');
-              }}
+              onClick={() => abrirSeccionInventario('lista')}
               aria-current={seccion === 'inventario' ? 'page' : undefined}
               className={`min-h-[48px] border-b-2 px-1 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
                 seccion === 'inventario'
@@ -125,10 +165,7 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => {
-                setAvisoInventario(null);
-                setSeccion('movimientos');
-              }}
+              onClick={abrirSeccionMovimientos}
               aria-current={seccion === 'movimientos' ? 'page' : undefined}
               className={`min-h-[48px] border-b-2 px-1 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer ${
                 seccion === 'movimientos'
@@ -140,6 +177,19 @@ export default function App() {
             </button>
           </nav>
         </div>
+
+        <div
+          aria-hidden={!cargaGlobalActiva}
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] overflow-hidden"
+        >
+          {cargaGlobalActiva && (
+            <div
+              role="progressbar"
+              aria-label="Actualizando información"
+              className="animar-barra-progreso h-full bg-[#1D4ED8]"
+            />
+          )}
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -147,7 +197,8 @@ export default function App() {
           vistaInventario === 'nuevo' ? (
             <NuevoProducto
               categorias={categorias}
-              onCancelar={() => setVistaInventario('lista')}
+              onCancelar={() => abrirSeccionInventario('lista')}
+              onGuardandoChange={setGuardandoProducto}
               onGuardado={async (nombreProducto) => {
                 setVistaInventario('lista');
                 setAvisoInventario(`Producto «${nombreProducto}» guardado con stock 0.`);
@@ -173,7 +224,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setAvisoInventario(null);
-                    setVistaInventario('nuevo');
+                    abrirSeccionInventario('nuevo');
                   }}
                   className="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] sm:min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
                 >
@@ -342,7 +393,7 @@ export default function App() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => setVistaInventario('nuevo')}
+                      onClick={() => abrirSeccionInventario('nuevo')}
                       className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#1D4ED8] px-4 py-2 text-sm font-medium text-[#FFFFFF] transition-colors duration-150 hover:bg-[#1E40AF] sm:min-h-[40px] cursor-pointer"
                     >
                       <Plus className="h-4 w-4" aria-hidden="true" />
@@ -454,6 +505,7 @@ export default function App() {
             cargandoProductos={cargando}
             productoPreseleccionadoId={productoParaMovimiento}
             onLimpiarPreseleccion={() => setProductoParaMovimiento(null)}
+            onActividadChange={setActividadMovimientos}
             onRecargarTodo={cargarInventario}
           />
         )}

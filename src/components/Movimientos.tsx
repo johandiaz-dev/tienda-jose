@@ -30,6 +30,7 @@ interface MovimientosProps {
   productoPreseleccionadoId?: string | null;
   onLimpiarPreseleccion?: () => void;
   onRecargarTodo: () => Promise<void>;
+  onActividadChange?: (activo: boolean) => void;
 }
 
 interface ErroresFormulario {
@@ -59,6 +60,7 @@ export function Movimientos({
   productoPreseleccionadoId,
   onLimpiarPreseleccion,
   onRecargarTodo,
+  onActividadChange,
 }: MovimientosProps) {
   const [movimientos, setMovimientos] = useState<MovimientoRegistro[]>([]);
   const [cargandoHistorial, setCargandoHistorial] = useState<boolean>(true);
@@ -102,6 +104,13 @@ export function Movimientos({
   useEffect(() => {
     void cargarHistorial();
   }, [cargarHistorial]);
+
+  useEffect(() => {
+    onActividadChange?.(cargandoHistorial || registrando);
+    return () => {
+      onActividadChange?.(false);
+    };
+  }, [cargandoHistorial, registrando, onActividadChange]);
 
   const mapaProductos = useMemo(() => {
     const mapa = new Map<string, ProductoInventario>();

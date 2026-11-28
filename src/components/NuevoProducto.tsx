@@ -11,6 +11,7 @@ interface NuevoProductoProps {
   categorias: Categoria[];
   onCancelar: () => void;
   onGuardado: (nombreProducto: string) => Promise<void>;
+  onGuardandoChange?: (guardando: boolean) => void;
 }
 
 interface ErroresFormulario {
@@ -20,7 +21,12 @@ interface ErroresFormulario {
   stockMinimo?: string;
 }
 
-export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProductoProps) {
+export function NuevoProducto({
+  categorias,
+  onCancelar,
+  onGuardado,
+  onGuardandoChange,
+}: NuevoProductoProps) {
   const [nombre, setNombre] = useState<string>('');
   const [categoriaId, setCategoriaId] = useState<string>('');
   const [precio, setPrecio] = useState<string>('');
@@ -37,7 +43,10 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
 
   useEffect(() => {
     refNombre.current?.focus();
-  }, []);
+    return () => {
+      onGuardandoChange?.(false);
+    };
+  }, [onGuardandoChange]);
 
   useEffect(() => {
     function manejarEscape(evento: KeyboardEvent) {
@@ -115,6 +124,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
     const nombreLimpio = nombre.trim();
 
     setGuardando(true);
+    onGuardandoChange?.(true);
 
     const { error } = await supabase.from('productos').insert({
       nombre: nombreLimpio,
@@ -127,10 +137,12 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
     if (error) {
       setErrorSupabase(error.message);
       setGuardando(false);
+      onGuardandoChange?.(false);
       return;
     }
 
     setGuardando(false);
+    onGuardandoChange?.(false);
     await onGuardado(nombreLimpio);
   }
 
