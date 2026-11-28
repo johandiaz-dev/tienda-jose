@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '../config';
 
@@ -27,6 +27,8 @@ interface MovimientoRegistro {
 interface MovimientosProps {
   productos: ProductoInventario[];
   cargandoProductos: boolean;
+  productoPreseleccionadoId?: string | null;
+  onLimpiarPreseleccion?: () => void;
   onRecargarTodo: () => Promise<void>;
 }
 
@@ -54,6 +56,8 @@ function formatearFecha(iso: string): string {
 export function Movimientos({
   productos,
   cargandoProductos,
+  productoPreseleccionadoId,
+  onLimpiarPreseleccion,
   onRecargarTodo,
 }: MovimientosProps) {
   const [movimientos, setMovimientos] = useState<MovimientoRegistro[]>([]);
@@ -67,10 +71,13 @@ export function Movimientos({
 
   const [errores, setErrores] = useState<ErroresFormulario>({});
   const [errorRegistro, setErrorRegistro] = useState<string | null>(null);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [registrando, setRegistrando] = useState<boolean>(false);
 
   const refProducto = useRef<HTMLSelectElement>(null);
   const refCantidad = useRef<HTMLInputElement>(null);
+  const refRadioEntrada = useRef<HTMLButtonElement>(null);
+  const refRadioSalida = useRef<HTMLButtonElement>(null);
 
   const cargarHistorial = useCallback(async () => {
     setCargandoHistorial(true);
@@ -104,7 +111,66 @@ export function Movimientos({
     return mapa;
   }, [productos]);
 
+  useEffect(() => {
+    if (!productoPreseleccionadoId) {
+      return;
+    }
+
+    const producto = mapaProductos.get(productoPreseleccionadoId);
+    setProductoId(productoPreseleccionadoId);
+    setTipo(producto?.stock_bajo ? 'entrada' : 'salida');
+    setErrores({});
+    setErrorRegistro(null);
+    setMensajeExito(null);
+    onLimpiarPreseleccion?.();
+    refCantidad.current?.focus();
+  }, [productoPreseleccionadoId, mapaProductos, onLimpiarPreseleccion]);
+
   const productoSeleccionado = productoId ? mapaProductos.get(productoId) : undefined;
+
+  const avisoStockSalida = useMemo(() => {
+    if (tipo !== 'salida' || !productoSeleccionado) {
+      return null;
+    }
+
+    if (productoSeleccionado.stock_actual <= 0) {
+      return 'Este producto tiene 0 unidades disponibles; no podrás registrar una salida hasta anotar una entrada.';
+    }
+
+    const cantidadLimpia = cantidad.trim();
+    if (/^\d+$/.test(cantidadLimpia)) {
+      const numero = Number.parseInt(cantidadLimpia, 10);
+      if (numero > productoSeleccionado.stock_actual) {
+        const unidadTexto = productoSeleccionado.stock_actual === 1 ? 'unidad' : 'unidades';
+        return `La cantidad supera el stock disponible: quedan ${productoSeleccionado.stock_actual} ${unidadTexto}.`;
+      }
+    }
+
+    return null;
+  }, [tipo, productoSeleccionado, cantidad]);
+
+  function manejarTecladoTipo(evento: KeyboardEvent<HTMLButtonElement>) {
+    if (
+      evento.key !== 'ArrowLeft' &&
+      evento.key !== 'ArrowRight' &&
+      evento.key !== 'ArrowUp' &&
+      evento.key !== 'ArrowDown'
+    ) {
+      return;
+    }
+
+    evento.preventDefault();
+    const siguienteTipo: TipoMovimiento = tipo === 'entrada' ? 'salida' : 'entrada';
+    setTipo(siguienteTipo);
+    setErrorRegistro(null);
+    setMensajeExito(null);
+
+    if (siguienteTipo === 'entrada') {
+      refRadioEntrada.current?.focus();
+    } else {
+      refRadioSalida.current?.focus();
+    }
+  }
 
   function validar(): ErroresFormulario {
     const nuevosErrores: ErroresFormulario = {};
@@ -127,6 +193,7 @@ export function Movimientos({
   async function manejarRegistro(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setErrorRegistro(null);
+    setMensajeExito(null);
 
     const nuevosErrores = validar();
     setErrores(nuevosErrores);
@@ -142,6 +209,7 @@ export function Movimientos({
 
     const productoElegido = mapaProductos.get(productoId);
     const productoValor = productoElegido ? productoElegido.id : productoId;
+    const cantidadNumero = Number.parseInt(cantidad.trim(), 10);
     const notaLimpia = nota.trim();
 
     setRegistrando(true);
@@ -149,7 +217,7 @@ export function Movimientos({
     const { error } = await supabase.from('movimientos').insert({
       producto_id: productoValor,
       tipo,
-      cantidad: Number.parseInt(cantidad.trim(), 10),
+      cantidad: cantidadNumero,
       nota: notaLimpia === '' ? null : notaLimpia,
     });
 
@@ -159,12 +227,17 @@ export function Movimientos({
       return;
     }
 
+    const nombreProducto = productoElegido ? productoElegido.nombre : 'producto seleccionado';
+    const accionTexto = tipo === 'entrada' ? 'Entrada registrada' : 'Salida registrada';
+    const unidadTexto = cantidadNumero === 1 ? 'unidad' : 'unidades';
+
     setProductoId('');
     setTipo('entrada');
     setCantidad('');
     setNota('');
     setErrores({});
     setRegistrando(false);
+    setMensajeExito(`${accionTexto}: ${cantidadNumero} ${unidadTexto} en «${nombreProducto}».`);
 
     await Promise.all([cargarHistorial(), onRecargarTodo()]);
   }
@@ -205,6 +278,7 @@ export function Movimientos({
                   onChange={(e) => {
                     setProductoId(e.target.value);
                     setErrorRegistro(null);
+                    setMensajeExito(null);
                     if (errores.productoId) {
                       setErrores((prev) => ({ ...prev, productoId: undefined }));
                     }
@@ -237,7 +311,11 @@ export function Movimientos({
                   </p>
                 )}
                 {errores.productoId && (
-                  <p id="error-mov-producto" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+                  <p
+                    id="error-mov-producto"
+                    role="alert"
+                    className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+                  >
                     {errores.productoId}
                   </p>
                 )}
@@ -253,13 +331,17 @@ export function Movimientos({
                   className="mt-1.5 grid grid-cols-2 gap-2.5"
                 >
                   <button
+                    ref={refRadioEntrada}
                     type="button"
                     role="radio"
                     aria-checked={tipo === 'entrada'}
+                    tabIndex={tipo === 'entrada' ? 0 : -1}
                     disabled={registrando}
+                    onKeyDown={manejarTecladoTipo}
                     onClick={() => {
                       setTipo('entrada');
                       setErrorRegistro(null);
+                      setMensajeExito(null);
                     }}
                     className={`min-h-[44px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
                       tipo === 'entrada'
@@ -271,13 +353,17 @@ export function Movimientos({
                   </button>
 
                   <button
+                    ref={refRadioSalida}
                     type="button"
                     role="radio"
                     aria-checked={tipo === 'salida'}
+                    tabIndex={tipo === 'salida' ? 0 : -1}
                     disabled={registrando}
+                    onKeyDown={manejarTecladoTipo}
                     onClick={() => {
                       setTipo('salida');
                       setErrorRegistro(null);
+                      setMensajeExito(null);
                     }}
                     className={`min-h-[44px] rounded-md border px-3.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-60 ${
                       tipo === 'salida'
@@ -309,12 +395,19 @@ export function Movimientos({
                   onChange={(e) => {
                     setCantidad(e.target.value);
                     setErrorRegistro(null);
+                    setMensajeExito(null);
                     if (errores.cantidad) {
                       setErrores((prev) => ({ ...prev, cantidad: undefined }));
                     }
                   }}
                   aria-invalid={Boolean(errores.cantidad)}
-                  aria-describedby={errores.cantidad ? 'error-mov-cantidad' : undefined}
+                  aria-describedby={
+                    errores.cantidad
+                      ? 'error-mov-cantidad'
+                      : avisoStockSalida
+                        ? 'aviso-stock-salida'
+                        : undefined
+                  }
                   placeholder="Ej. 10"
                   className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 disabled:opacity-60 ${
                     errores.cantidad
@@ -323,22 +416,38 @@ export function Movimientos({
                   }`}
                 />
                 {errores.cantidad && (
-                  <p id="error-mov-cantidad" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+                  <p
+                    id="error-mov-cantidad"
+                    role="alert"
+                    className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+                  >
                     {errores.cantidad}
+                  </p>
+                )}
+                {!errores.cantidad && avisoStockSalida && (
+                  <p
+                    id="aviso-stock-salida"
+                    role="status"
+                    className="mt-1.5 text-xs font-medium text-[#B45309]"
+                  >
+                    {avisoStockSalida}
                   </p>
                 )}
               </div>
 
               <div>
                 <label htmlFor="mov-nota" className="block text-sm font-medium text-[#0F172A]">
-                  Nota <span className="font-normal text-[#64748B]">(opcional)</span>
+                  Nota <span className="font-normal text-[#475569]">(opcional)</span>
                 </label>
                 <input
                   id="mov-nota"
                   type="text"
                   disabled={registrando}
                   value={nota}
-                  onChange={(e) => setNota(e.target.value)}
+                  onChange={(e) => {
+                    setNota(e.target.value);
+                    setMensajeExito(null);
+                  }}
                   placeholder="Ej. Pedido semanal o venta en mostrador"
                   className="mt-1.5 min-h-[44px] w-full rounded-md border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 focus:border-[#1D4ED8] disabled:opacity-60"
                 />
@@ -367,6 +476,22 @@ export function Movimientos({
                 Ajusta la cantidad según el stock disponible o revisa la conexión e intenta de
                 nuevo.
               </p>
+            </div>
+          )}
+
+          {mensajeExito && !errorRegistro && (
+            <div
+              role="status"
+              className="mt-4 flex items-center justify-between gap-3 rounded-md border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3 text-sm font-medium text-[#15803D]"
+            >
+              <p>{mensajeExito}</p>
+              <button
+                type="button"
+                onClick={() => setMensajeExito(null)}
+                className="min-h-[36px] rounded px-2 text-xs font-medium text-[#15803D] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Cerrar
+              </button>
             </div>
           )}
         </div>

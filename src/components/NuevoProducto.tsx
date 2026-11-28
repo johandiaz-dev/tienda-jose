@@ -1,4 +1,4 @@
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '../config';
 
@@ -10,7 +10,7 @@ export interface Categoria {
 interface NuevoProductoProps {
   categorias: Categoria[];
   onCancelar: () => void;
-  onGuardado: () => Promise<void>;
+  onGuardado: (nombreProducto: string) => Promise<void>;
 }
 
 interface ErroresFormulario {
@@ -35,6 +35,31 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
   const refPrecio = useRef<HTMLInputElement>(null);
   const refStockMinimo = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    refNombre.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    function manejarEscape(evento: KeyboardEvent) {
+      if (evento.key !== 'Escape' || guardando) {
+        return;
+      }
+
+      const sinCambios =
+        nombre.trim() === '' &&
+        categoriaId === '' &&
+        precio.trim() === '' &&
+        stockMinimo.trim() === '';
+
+      if (sinCambios) {
+        onCancelar();
+      }
+    }
+
+    window.addEventListener('keydown', manejarEscape);
+    return () => window.removeEventListener('keydown', manejarEscape);
+  }, [nombre, categoriaId, precio, stockMinimo, guardando, onCancelar]);
+
   function validar(): ErroresFormulario {
     const nuevosErrores: ErroresFormulario = {};
 
@@ -48,10 +73,9 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
 
     const precioLimpio = precio.trim();
     if (precioLimpio === '') {
-      nuevosErrores.precio = 'Falta el precio. Escribe el valor en pesos colombianos.';
-    } else if (!/^\d+$/.test(precioLimpio)) {
-      nuevosErrores.precio =
-        'El precio no es válido. Escribe un número entero sin puntos ni decimales.';
+      nuevosErrores.precio = 'Falta el precio. Escribe el valor en pesos.';
+    } else if (!/^\d+$/.test(precioLimpio) || Number.parseInt(precioLimpio, 10) <= 0) {
+      nuevosErrores.precio = 'Ingresa un precio mayor a 0.';
     }
 
     const stockMinimoLimpio = stockMinimo.trim();
@@ -88,11 +112,12 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
 
     const categoriaElegida = categorias.find((c) => String(c.id) === categoriaId);
     const categoriaValor = categoriaElegida ? categoriaElegida.id : categoriaId;
+    const nombreLimpio = nombre.trim();
 
     setGuardando(true);
 
     const { error } = await supabase.from('productos').insert({
-      nombre: nombre.trim(),
+      nombre: nombreLimpio,
       categoria_id: categoriaValor,
       precio: Number.parseInt(precio.trim(), 10),
       stock_actual: 0,
@@ -106,7 +131,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
     }
 
     setGuardando(false);
-    await onGuardado();
+    await onGuardado(nombreLimpio);
   }
 
   return (
@@ -160,14 +185,18 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
               aria-invalid={Boolean(errores.nombre)}
               aria-describedby={errores.nombre ? 'error-nombre' : undefined}
               placeholder="Ej. Arroz Diana 500 g"
-              className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 ${
+              className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 ${
                 errores.nombre
                   ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                   : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
               }`}
             />
             {errores.nombre && (
-              <p id="error-nombre" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+              <p
+                id="error-nombre"
+                role="alert"
+                className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+              >
                 {errores.nombre}
               </p>
             )}
@@ -189,7 +218,7 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
               }}
               aria-invalid={Boolean(errores.categoriaId)}
               aria-describedby={errores.categoriaId ? 'error-categoria' : undefined}
-              className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 ${
+              className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 text-sm text-[#0F172A] transition-colors duration-150 ${
                 errores.categoriaId
                   ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                   : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
@@ -203,7 +232,11 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
               ))}
             </select>
             {errores.categoriaId && (
-              <p id="error-categoria" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+              <p
+                id="error-categoria"
+                role="alert"
+                className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+              >
                 {errores.categoriaId}
               </p>
             )}
@@ -212,14 +245,14 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="campo-precio" className="block text-sm font-medium text-[#0F172A]">
-                Precio (COP)
+                Precio en pesos
               </label>
               <input
                 ref={refPrecio}
                 id="campo-precio"
                 type="number"
                 inputMode="numeric"
-                min="0"
+                min="1"
                 step="1"
                 value={precio}
                 onChange={(e) => {
@@ -231,14 +264,18 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
                 aria-invalid={Boolean(errores.precio)}
                 aria-describedby={errores.precio ? 'error-precio' : undefined}
                 placeholder="Ej. 3200"
-                className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 ${
+                className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 ${
                   errores.precio
                     ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                     : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
                 }`}
               />
               {errores.precio && (
-                <p id="error-precio" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+                <p
+                  id="error-precio"
+                  role="alert"
+                  className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+                >
                   {errores.precio}
                 </p>
               )}
@@ -268,14 +305,18 @@ export function NuevoProducto({ categorias, onCancelar, onGuardado }: NuevoProdu
                 aria-invalid={Boolean(errores.stockMinimo)}
                 aria-describedby={errores.stockMinimo ? 'error-stock-minimo' : undefined}
                 placeholder="Ej. 5"
-                className={`mt-1.5 min-h-[42px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 ${
+                className={`mt-1.5 min-h-[44px] w-full rounded-md border bg-[#FFFFFF] px-3.5 py-2 font-mono text-sm text-[#0F172A] tabular-nums placeholder:font-sans placeholder:text-[#64748B] transition-colors duration-150 ${
                   errores.stockMinimo
                     ? 'border-[#B91C1C] focus:border-[#B91C1C]'
                     : 'border-[#E2E8F0] focus:border-[#1D4ED8]'
                 }`}
               />
               {errores.stockMinimo && (
-                <p id="error-stock-minimo" className="mt-1.5 text-xs font-medium text-[#B91C1C]">
+                <p
+                  id="error-stock-minimo"
+                  role="alert"
+                  className="mt-1.5 text-xs font-medium text-[#B91C1C]"
+                >
                   {errores.stockMinimo}
                 </p>
               )}
